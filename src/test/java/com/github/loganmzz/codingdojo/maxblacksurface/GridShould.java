@@ -10,4 +10,9 @@ public class GridShould {
     public void return_0_when_empty() {
         assertEquals(0, new Grid("").getMaxBlackSurface());
     }
+
+    @Test
+    public void return_1_when_01() {
+        assertEquals(1, new Grid("01").getMaxBlackSurface());
+    }
 }
