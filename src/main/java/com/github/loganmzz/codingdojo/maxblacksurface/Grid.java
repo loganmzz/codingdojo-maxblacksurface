@@ -1,32 +1,37 @@
 package com.github.loganmzz.codingdojo.maxblacksurface;
 
-import java.util.stream.IntStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 
-public class Grid {
+import static java.util.Collections.emptySet;
+import static java.util.stream.Collectors.toSet;
 
+public class Grid {
 
     private int maxBlackSurface;
 
     public Grid(String blackCellCoordinates) {
         if (!blackCellCoordinates.isEmpty()) {
-            int[][] grid = new int[10][10];
-            for (String blackCellCoordinate : blackCellCoordinates.split(",")) {
-                int colIndex = Integer.parseInt(blackCellCoordinate.substring(0, 1));
-                int rowIndex = Integer.parseInt(blackCellCoordinate.substring(1, 2));
-                grid[colIndex][rowIndex] = 1;
-            }
-
-            for (int colIndex = 0; colIndex < grid.length; colIndex++) {
-                for (int rowIndex = 0; rowIndex < grid[colIndex].length; rowIndex++) {
-                    if (grid[colIndex][rowIndex] == 1) {
-                        if (colIndex > 0) grid[colIndex][rowIndex] += grid[colIndex-1][rowIndex  ];
-                        if (rowIndex > 0) grid[colIndex][rowIndex] += grid[colIndex  ][rowIndex-1];
-                    }
-                }
-            }
-            maxBlackSurface = Stream.of(grid).flatMapToInt(col -> IntStream.of(col)).max().getAsInt();
+            maxBlackSurface = Stream
+                    .of(blackCellCoordinates.split(","))
+                    .map(Cell::parse)
+                    .collect(HashMap::new, Grid::appendToCluster, (a,b) -> { throw new UnsupportedOperationException(); })
+                    .entrySet().stream()
+                    .mapToInt(e -> e.getValue().size())
+                    .max().getAsInt()
+            ;
         }
+    }
+
+    private static Map<Cell, Set<Cell>> appendToCluster(Map<Cell, Set<Cell>> cellToCluster, Cell blackCell) {
+        Set<Cell> cluster = Stream.concat(
+                blackCell.computeSiblings().stream().flatMap(sibling -> cellToCluster.getOrDefault(sibling, emptySet()).stream()),
+                Stream.of(blackCell)
+        ).collect(toSet());
+        cluster.forEach(cell -> cellToCluster.put(cell, cluster));
+        return cellToCluster;
     }
 
     public int getMaxBlackSurface() {
